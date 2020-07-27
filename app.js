@@ -3,18 +3,21 @@ var app = express();
 var server = require('http').createServer(app).listen(3000,()=>{
     console.log('Server running... ');
 });;
+
 var io = require('socket.io').listen(server);
 var cv = require('opencv4nodejs');
-const wCap = new cv.VideoCapture(0)    ;
+const wCap = new cv.VideoCapture(0)  ;
+
+const fs = require('fs')
 
 
 users = [];
 connections =  []; 
 audioList = [];
 
-app.get('/play', function(req,res) {
-    var audioIndex = audioList.findIndex(item => item.id === req.query.name)
-    let file = audioList[audioIndex].path
+app.get('/play/:path', function(req,res) {
+    var audioIndex = audioList.findIndex(item => item === req.params.path)
+    var file = audioList[audioIndex]
     var stream = fs.createReadStream(file)
     .on("open", function() {
       stream.pipe(res);
@@ -23,7 +26,6 @@ app.get('/play', function(req,res) {
 
 
 app.get('/',function(req,res){
-    console.log(req.query.name);
     createAudioPaths();
     res.sendFile(__dirname + '/index.html');
 });
@@ -34,7 +36,7 @@ app.get('/list', async(req,res) => {
 
 function createAudioPaths()
 {
-    audioList.push(__dirname+"/audio/plain_truth.mp3");
+    audioList.push("plain_truth.mp3");
 }
 
 io.sockets.on('connection', function(socket){
@@ -53,8 +55,6 @@ io.sockets.on('connection', function(socket){
 
 
     socket.on('send message',function(data){
-        // if(data.value().splite(':')[0]=='audio')
-            console.log(data.value().splite(':'));
         io.sockets.emit('new message', {user: socket.username, msg: data});
     });
     
@@ -85,31 +85,3 @@ io.sockets.on('connection', function(socket){
         io.emit('image',image)
     },1000)
 });
-
-
-/*
-socket.emit('message', "this is a test"); //sending to sender-client only
-socket.broadcast.emit('message', "this is a test"); //sending to all clients except sender
-
-
-socket.broadcast.to('game').emit('message', 'nice game'); //sending to all clients in 'game' room(channel) except sender
-socket.to('game').emit('message', 'enjoy the game'); //sending to sender client, only if they are in 'game' room(channel)
-
-
-socket.broadcast.to(socketid).emit('message', 'for your eyes only'); //sending to individual socketid
-io.emit('message', "this is a test"); //sending to all clients, include sender
-
-
-io.in('game').emit('message', 'cool game'); //sending to all clients in 'game' room(channel), include sender
-io.of('myNamespace').emit('message', 'gg'); //sending to all clients in namespace 'myNamespace', include sender
-
-
-socket.emit(); //send to all connected clients
-socket.broadcast.emit(); //send to all connected clients except the one that sent the message
-
-
-socket.on(); //event listener, can be called on client to execute on server
-io.sockets.socket(); //for emiting to specific clients
-io.sockets.emit(); //send to all connected clients (same as socket.emit)
-io.sockets.on() ; //initial connection from a client.
-*/
