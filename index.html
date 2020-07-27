@@ -129,36 +129,38 @@
             });          
         
             //video call
-            // socket.on('image',(data)=>{
-            //     const imageElem = document.getElementById('videoChat');
-            //     imageElem.src = `data:image/jpeg;base64,${data}`;
+            socket.on('image',(data)=>{
+                const imageElem = document.getElementById('videoChat');
+                imageElem.src = `data:image/jpeg;base64,${data}`;
 
-            // })
-        
-
-            
-
-            
+            })
         });
 
         var audios = document.getElementById('audioList');
-            var list = document.createElement('ul');
-            
-            let audioList;
-            fetch('http://localhost:3000/list')
-            .then(res => res.json())
-            .then(data => {
-                audioList = data;
-                data.map(audio => {
-                    var listItem = document.createElement('li');
-                    var link = document.createElement('a');
-                    link.appendChild(document.createTextNode(audio));
-                    link.setAttribute("onclick","changeAudio("+JSON.stringify(audio)+")");
-                    listItem.appendChild(link);
-                    list.appendChild(listItem);
-                })
-            });
+        var list = document.createElement('ul');
+        
+        let audioList;
+        fetch('http://localhost:3000/list')
+        .then(res => res.json())
+        .then(data => {
+            audioList = data;
+            data.map(audio => {
+                var listItem = document.createElement('li');
+                var link = document.createElement('a');
+                link.appendChild(document.createTextNode(audio));//value for a
+                link.setAttribute("onclick","changeAudio("+JSON.stringify(audio)+")");
+                listItem.appendChild(link);
+                list.appendChild(listItem);
+            })
+        });
         audios.appendChild(list);
+
+        function changeAudio(audio) {
+            alert(audio)
+            let player = document.getElementById('audio');
+            player.src = "http://localhost:3000/play/"+audio;
+            player.play();
+        }
     </script>
 </body>
 
