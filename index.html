@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IO chat </title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body{
+            margin-top: 30px;
+            
+        }
+        #messageArea{
+            /*
+             * make the message screen hidden by default 
+            */
+            display: none;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container">
+        <div id="userFormArea" class="row">
+            <div class="col-md-12">
+                <form action="" id="userForm">
+                    <div class="form-group">
+                        <label for="">Enter Username</label>
+                        <input class="form-control" name="" id="username" autocomplete="off" />
+                        <br/>
+                        <br/>
+
+                        <input class="btn btn-primary" type="submit" name="" id="" value="login">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="messageArea" class="row">
+            <div class="col-md-4">
+                <div class="well">
+                    <h3>Online Users</h3>
+                    <ul class="list-group" id="users"></ul>
+                </div>
+            </div>
+            <dv class="col-md-8">
+
+                <img id="videoChat">
+                <audio id="audio" src="" controls></audio>
+                <div id="audioList">
+                    <h2>Tracks: </h2>
+                </div>
+                <div class="chat" id="chat"></div>
+                <form action="" id="messageFrom">
+                    <div class="form-group">
+                        <label for="">UserName</label>
+                        <input type="text" name="" class="form-control" id="specificUser"><br>
+                        <label for="">Enter Message</label>
+                        <textarea class="form-control" name="" id="message" cols="30" rows="10"></textarea>
+                        <br>
+                        <input class="btn btn-primary" type="submit" name="" id="" value="send message">
+                    </div>
+                </form>
+            </dv>
+        </div>
+
+    </div>
+    <script>
+        $(function(){
+            var socket = io.connect();
+            var $messageFrom = $('#messageFrom');
+            var $message = $('#message');
+            var $chat = $('#chat');
+            var $messageArea = $('#messageArea');
+            var $userFormArea = $('#userFormArea');
+            var $userForm = $('#userForm');
+            var $users = $('#users');
+            var $username = $('#username');
+            var $specificUser = $('#specificUser');
+            var $imageElm = $('#videoChat')
+            // send message from the user 
+            $messageFrom.submit(function(e){
+                e.preventDefault(); 
+                if($specificUser.val()=='')
+                    socket.emit('send message',$message.val());
+                else
+                    socket.emit('send message to user',{'data':$message.val(),'userName':$specificUser.val()});
+                $message.val('');
+            });
+
+            //recieve the message 
+            socket.on('new message',function(data){
+                $chat.append('<div class="well"><strong>'+data.user+': </strong>'+data.msg+'</div>');
+            });
+
+            socket.on('new message to user',function(data){
+                console.log(data);
+                $chat.append('<div class="well"><strong>'+data.senderUserName+' to '+data.reciverUserName+': </strong>'+data.data+'</div>');
+            });
+
+            // login
+            $userForm.submit(function(e){
+                e.preventDefault(); 
+                socket.emit('new user',$username.val(),function(data){
+                    if(data){
+                        //hide the login secreen
+                        $userFormArea.hide(); 
+                        //show the message screen
+                        $messageArea.show();
+                    }
+                });
+                // delete the user name from the input after send the login, actually no need for this line!
+                $username.val('');
+            });
+
+            // recieve  list of the users name 
+            socket.on('get users',function(data){
+                var html = '';
+                //loop on the data list (online users name)
+                for(i=0;i<data.length; i++)
+                {
+                    html += '<li class="list-group-item">'+data[i]+'</li>';
+                }
+                // add the lis to the users ul 
+                $users.html(html);
+            });          
+        
+            //video call
+            // socket.on('image',(data)=>{
+            //     const imageElem = document.getElementById('videoChat');
+            //     imageElem.src = `data:image/jpeg;base64,${data}`;
+
+            // })
+        
+
+            
+
+            
+        });
+
+        var audios = document.getElementById('audioList');
+            var list = document.createElement('ul');
+            
+            let audioList;
+            fetch('http://localhost:3000/list')
+            .then(res => res.json())
+            .then(data => {
+                audioList = data;
+                data.map(audio => {
+                    var listItem = document.createElement('li');
+                    var link = document.createElement('a');
+                    link.appendChild(document.createTextNode(audio));
+                    link.setAttribute("onclick","changeAudio("+JSON.stringify(audio)+")");
+                    listItem.appendChild(link);
+                    list.appendChild(listItem);
+                })
+            });
+        audios.appendChild(list);
+    </script>
+</body>
+
+
+
+</html>
